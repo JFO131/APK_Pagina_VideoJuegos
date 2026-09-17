@@ -62,4 +62,65 @@ export function obtenerCatalogoLocal() {
   return db.getAllSync('SELECT * FROM videojuegos_local;');
 }
 
+// Genera un identificador único para cada fila del carrito local.
+// Lo usamos porque, al estar offline, no tenemos un id del servidor todavía.
+function generarLocalId() {
+  return `local_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+// Agrega un videojuego al carrito local.
+// Si el juego ya estaba en el carrito, simplemente suma 1 a la cantidad.
+export function agregarAlCarritoLocal(juego) {
+  const existente = db.getFirstSync(
+    'SELECT * FROM carrito_local WHERE videojuego_id = ? AND eliminado = 0',
+    [juego.id]
+  );
+
+  if (existente) {
+    db.runSync(
+      'UPDATE carrito_local SET cantidad = cantidad + 1, sincronizado = 0 WHERE local_id = ?',
+      [existente.local_id]
+    );
+    return;
+  }
+
+  db.runSync(
+    `INSERT INTO carrito_local (local_id, videojuego_id, nombre, imagen, precio, cantidad, sincronizado, eliminado)
+     VALUES (?, ?, ?, ?, ?, 1, 0, 0)`,
+    [generarLocalId(), juego.id, juego.nombre, juego.imagen, juego.precio]
+  );
+}
+
+// Devuelve todos los productos del carrito que no han sido eliminados
+export function obtenerCarritoLocal() {
+  return db.getAllSync('SELECT * FROM carrito_local WHERE eliminado = 0');
+}
+
+// Cambia la cantidad de un producto. Si la cantidad llega a 0, lo elimina.
+export function actualizarCantidadLocal(localId, nuevaCantidad) {
+  if (nuevaCantidad <= 0) {
+    eliminarDelCarritoLocal(localId);
+    return;
+  }
+
+  db.runSync(
+    'UPDATE carrito_local SET cantidad = ?, sincronizado = 0 WHERE local_id = ?',
+    [nuevaCantidad, localId]
+  );
+}
+
+// Marca un producto como eliminado (no lo borra físicamente todavía,
+// así en la Etapa 6 podemos avisarle al backend que también lo elimine).
+export function eliminarDelCarritoLocal(localId) {
+  db.runSync(
+    'UPDATE carrito_local SET eliminado = 1, sincronizado = 0 WHERE local_id = ?',
+    [localId]
+  );
+}
+
+// Vacía el carrito por completo (lo usaremos después de confirmar una compra)
+export function vaciarCarritoLocal() {
+  db.runSync('DELETE FROM carrito_local');
+}
+
 export default db;
