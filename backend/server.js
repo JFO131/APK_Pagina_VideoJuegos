@@ -1,17 +1,19 @@
 // server.js
-require('./database/init'); // crea tablas y datos de prueba al iniciar
+require('./database/init');
 
 const express = require('express');
 const cors = require('cors');
 const juegosRoutes = require('./routes/juegos.routes');
+const authRoutes = require('./routes/auth.routes'); // NUEVO
 
 const app = express();
 const PUERTO = 3000;
 
-app.use(cors());          // permite que la app móvil consuma la API
-app.use(express.json());  // permite recibir JSON en el body de las peticiones
+app.use(cors());
+app.use(express.json());
 
 app.use('/api/juegos', juegosRoutes);
+app.use('/api/auth', authRoutes); // NUEVO
 
 app.get('/', (req, res) => {
   res.json({ mensaje: 'API de la tienda de videojuegos funcionando' });
