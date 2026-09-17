@@ -1,4 +1,3 @@
-// components/JuegoCard.js
 // Tarjeta que muestra la información básica de un videojuego.
 // Recibe el juego como prop y una función que se ejecuta al presionarla.
 

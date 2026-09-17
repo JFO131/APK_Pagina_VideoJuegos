@@ -1,4 +1,3 @@
-// services/conexion.js
 // Ayuda a saber si el celular tiene conexión a internet,
 // y permite "escuchar" cuando la conexión cambia.
 

@@ -1,4 +1,3 @@
-// screens/CarritoScreen.js
 // Muestra el contenido del carrito, permite modificar cantidades,
 // eliminar productos, y ver el total antes de ir a comprar.
 

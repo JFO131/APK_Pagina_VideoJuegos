@@ -1,4 +1,3 @@
-// config/db.js
 // Aquí abrimos la conexión a la base de datos SQLite.
 // better-sqlite3 crea el archivo tienda.db automáticamente si no existe.
 

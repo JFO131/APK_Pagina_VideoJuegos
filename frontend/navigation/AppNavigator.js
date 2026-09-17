@@ -1,4 +1,3 @@
-// navigation/AppNavigator.js
 // Define las pantallas disponibles y cómo se navega entre ellas.
 
 import { TouchableOpacity, Text } from 'react-native';

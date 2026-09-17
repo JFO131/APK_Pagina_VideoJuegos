@@ -1,4 +1,3 @@
-// database/init.js
 // Crea las tablas de la base de datos si todavía no existen,
 // y agrega videojuegos de prueba si la tabla está vacía.
 

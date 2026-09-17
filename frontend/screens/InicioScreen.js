@@ -1,4 +1,3 @@
-// screens/InicioScreen.js
 // Pantalla de bienvenida con botones para ir a Login o Registro.
 
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';

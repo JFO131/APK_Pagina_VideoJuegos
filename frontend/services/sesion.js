@@ -1,4 +1,3 @@
-// services/sesion.js
 // Guarda y recupera la sesión del usuario usando almacenamiento local del celular.
 
 import AsyncStorage from '@react-native-async-storage/async-storage';

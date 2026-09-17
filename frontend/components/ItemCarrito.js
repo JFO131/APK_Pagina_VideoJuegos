@@ -1,4 +1,3 @@
-// components/ItemCarrito.js
 // Muestra un producto dentro del carrito, con controles de cantidad y botón de eliminar.
 
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';

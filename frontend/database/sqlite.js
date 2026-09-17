@@ -1,4 +1,3 @@
-// database/sqlite.js
 // Maneja la base de datos local SQLite del celular.
 // Aquí se guarda el catálogo (para verlo offline) y el carrito local.
 
@@ -121,6 +120,26 @@ export function eliminarDelCarritoLocal(localId) {
 // Vacía el carrito por completo (lo usaremos después de confirmar una compra)
 export function vaciarCarritoLocal() {
   db.runSync('DELETE FROM carrito_local');
+}
+
+// Trae las filas del carrito que todavía no se han enviado al servidor
+export function obtenerCarritoNoSincronizado() {
+  return db.getAllSync('SELECT * FROM carrito_local WHERE sincronizado = 0');
+}
+
+// Marca como sincronizadas las filas que el servidor ya confirmó
+export function marcarCarritoComoSincronizado(localIds) {
+  const marcar = db.prepareSync('UPDATE carrito_local SET sincronizado = 1 WHERE local_id = ?');
+  for (const id of localIds) {
+    marcar.executeSync([id]);
+  }
+  marcar.finalizeSync();
+}
+
+// Borra físicamente del celular las filas que ya se eliminaron
+// tanto localmente como en el servidor (ya cumplieron su propósito).
+export function eliminarFilasMarcadasComoEliminadas() {
+  db.runSync('DELETE FROM carrito_local WHERE eliminado = 1 AND sincronizado = 1');
 }
 
 export default db;

@@ -1,4 +1,3 @@
-// controllers/juegos.controller.js
 const db = require('../config/db');
 
 // GET /api/juegos → devuelve todos los videojuegos

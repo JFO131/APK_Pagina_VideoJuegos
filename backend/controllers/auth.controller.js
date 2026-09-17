@@ -1,4 +1,3 @@
-// controllers/auth.controller.js
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
@@ -6,7 +5,7 @@ const db = require('../config/db');
 // Esta clave se usa para firmar los tokens. En un proyecto real
 // iría en una variable de entorno (.env), pero para el ejemplo
 // académico la dejamos aquí para que sea fácil de ver y explicar.
-const CLAVE_SECRETA = 'clave-secreta-tienda-videojuegos';
+const { CLAVE_SECRETA } = require('../config/claves');
 
 // POST /api/auth/registro
 function registrar(req, res) {

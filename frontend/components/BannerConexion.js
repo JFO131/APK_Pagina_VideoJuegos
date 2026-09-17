@@ -1,4 +1,3 @@
-// components/BannerConexion.js
 // Muestra un aviso en la parte superior de la pantalla según el estado de conexión.
 
 import { View, Text, StyleSheet } from 'react-native';

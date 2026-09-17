@@ -1,4 +1,3 @@
-// screens/CatalogoScreen.js
 // Pantalla que muestra el catálogo. Funciona online (trae datos del backend
 // y los guarda localmente) y offline (lee lo último guardado en SQLite).
 
@@ -9,6 +8,7 @@ import { guardarCatalogoLocal, obtenerCatalogoLocal } from '../database/sqlite';
 import { hayConexion, escucharCambiosDeConexion } from '../services/conexion';
 import JuegoCard from '../components/JuegoCard';
 import BannerConexion from '../components/BannerConexion';
+import { sincronizarCarritoConServidor } from '../services/sincronizacion';
 
 export default function CatalogoScreen({ navigation }) {
   const [juegos, setJuegos] = useState([]);
@@ -17,21 +17,27 @@ export default function CatalogoScreen({ navigation }) {
   const [estadoBanner, setEstadoBanner] = useState(null);
 
   useEffect(() => {
-    cargarJuegos();
+  cargarJuegos();
 
-    // Escuchamos cambios de conexión mientras el usuario está en esta pantalla
-    const dejarDeEscuchar = escucharCambiosDeConexion((conectado) => {
-      if (conectado) {
-        setEstadoBanner('sincronizando');
-        cargarJuegos(); // al volver la conexión, refrescamos el catálogo
-        setTimeout(() => setEstadoBanner(null), 2000);
-      } else {
-        setEstadoBanner('offline');
-      }
-    });
+  const dejarDeEscuchar = escucharCambiosDeConexion((conectado) => {
+    if (conectado) {
+      setEstadoBanner('sincronizando');
 
-    return dejarDeEscuchar; // se ejecuta al salir de la pantalla
-  }, []);
+      // Al volver la conexión: primero sincronizamos el carrito pendiente,
+      // y luego refrescamos el catálogo con lo más reciente del servidor.
+      sincronizarCarritoConServidor()
+        .catch(() => {}) // si falla, no interrumpimos la app; se reintentará después
+        .finally(() => {
+          cargarJuegos();
+          setTimeout(() => setEstadoBanner(null), 2000);
+        });
+    } else {
+      setEstadoBanner('offline');
+    }
+  });
+
+  return dejarDeEscuchar;
+}, []);
 
   async function cargarJuegos() {
     try {

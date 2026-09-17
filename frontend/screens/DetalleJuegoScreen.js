@@ -1,4 +1,3 @@
-// screens/DetalleJuegoScreen.js
 // Muestra la información completa de un videojuego y permite agregarlo al carrito.
 
 import { useState, useEffect } from 'react';

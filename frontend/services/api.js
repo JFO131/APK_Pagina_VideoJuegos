@@ -1,4 +1,3 @@
-// services/api.js
 // Aquí definimos la URL base del backend y las funciones
 // que hacen las peticiones HTTP a la API.
 
@@ -69,6 +68,26 @@ export async function iniciarSesion(correo, contrasena) {
 
   if (!respuesta.ok) {
     throw new Error(datos.mensaje || 'No se pudo iniciar sesión');
+  }
+
+  return datos;
+}
+
+// Envía al backend los cambios pendientes del carrito
+export async function sincronizarCarrito(token, items) {
+  const respuesta = await fetch(`${URL_API}/carrito/sincronizar`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ items }),
+  });
+
+  const datos = await respuesta.json();
+
+  if (!respuesta.ok) {
+    throw new Error(datos.mensaje || 'No se pudo sincronizar el carrito');
   }
 
   return datos;

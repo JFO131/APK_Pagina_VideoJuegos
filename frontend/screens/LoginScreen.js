@@ -1,4 +1,3 @@
-// screens/LoginScreen.js
 // Formulario de inicio de sesión.
 
 import { useState } from 'react';

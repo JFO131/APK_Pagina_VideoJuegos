@@ -1,4 +1,3 @@
-// screens/RegistroScreen.js
 // Formulario para crear una cuenta nueva.
 
 import { useState } from 'react';
