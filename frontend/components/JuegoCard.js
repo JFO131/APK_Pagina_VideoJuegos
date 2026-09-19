@@ -1,52 +1,42 @@
-// Tarjeta que muestra la información básica de un videojuego.
-// Recibe el juego como prop y una función que se ejecuta al presionarla.
+// components/JuegoCard.js
+// Tarjeta estilo "póster". La portada es un color de fondo + un ícono
+// del género (no una imagen descargada), así siempre se ve bien.
 
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { obtenerIcono } from '../constants/generos';
 
 export default function JuegoCard({ juego, alPresionar }) {
   return (
-    <TouchableOpacity style={estilos.tarjeta} onPress={alPresionar}>
-      <Image source={{ uri: juego.imagen }} style={estilos.imagen} />
-      <View style={estilos.info}>
-        <Text style={estilos.nombre}>{juego.nombre}</Text>
-        <Text style={estilos.genero}>{juego.genero}</Text>
-        <Text style={estilos.precio}>${juego.precio.toFixed(2)}</Text>
+    <TouchableOpacity
+      style={[estilos.tarjeta, { backgroundColor: `#${juego.imagen}` }]}
+      onPress={alPresionar}
+      activeOpacity={0.85}
+    >
+      <View style={estilos.iconoFondo}>
+        <Ionicons name={obtenerIcono(juego.genero)} size={54} color="rgba(255,255,255,0.18)" />
+      </View>
+
+      <View style={estilos.insignia}>
+        <Text style={estilos.textoInsignia}>{juego.genero}</Text>
+      </View>
+
+      <View style={estilos.overlay}>
+        <Text style={estilos.nombre} numberOfLines={2}>{juego.nombre}</Text>
+        <Text style={estilos.precio}>
+          {juego.precio === 0 ? 'Gratis' : `$${juego.precio.toFixed(2)}`}
+        </Text>
       </View>
     </TouchableOpacity>
   );
 }
 
 const estilos = StyleSheet.create({
-  tarjeta: {
-    flexDirection: 'row',
-    backgroundColor: '#1e1e2e',
-    borderRadius: 12,
-    marginBottom: 12,
-    overflow: 'hidden',
-  },
-  imagen: {
-    width: 90,
-    height: 90,
-  },
-  info: {
-    flex: 1,
-    padding: 10,
-    justifyContent: 'center',
-  },
-  nombre: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  genero: {
-    color: '#a0a0c0',
-    fontSize: 13,
-    marginTop: 2,
-  },
-  precio: {
-    color: '#4ade80',
-    fontSize: 15,
-    fontWeight: 'bold',
-    marginTop: 6,
-  },
+  tarjeta: { width: '48%', aspectRatio: 0.72, borderRadius: 16, overflow: 'hidden', marginBottom: 16, justifyContent: 'flex-end' },
+  iconoFondo: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center' },
+  insignia: { position: 'absolute', top: 10, left: 10, backgroundColor: 'rgba(0,0,0,0.4)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  textoInsignia: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
+  overlay: { backgroundColor: 'rgba(0,0,0,0.55)', padding: 10 },
+  nombre: { color: '#fff', fontSize: 14, fontWeight: 'bold' },
+  precio: { color: '#4ade80', fontSize: 15, fontWeight: 'bold', marginTop: 4 },
 });

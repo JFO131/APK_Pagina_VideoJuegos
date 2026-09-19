@@ -1,43 +1,41 @@
-// Pantalla que muestra el catálogo. Funciona online (trae datos del backend
-// y los guarda localmente) y offline (lee lo último guardado en SQLite).
-
+// screens/CatalogoScreen.js
 import { useState, useEffect } from 'react';
-import { View, FlatList, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, FlatList, Text, ActivityIndicator, StyleSheet, RefreshControl } from 'react-native';
 import { obtenerJuegos } from '../services/api';
 import { guardarCatalogoLocal, obtenerCatalogoLocal } from '../database/sqlite';
 import { hayConexion, escucharCambiosDeConexion } from '../services/conexion';
+import { sincronizarCarritoConServidor } from '../services/sincronizacion';
 import JuegoCard from '../components/JuegoCard';
 import BannerConexion from '../components/BannerConexion';
-import { sincronizarCarritoConServidor } from '../services/sincronizacion';
+import { useTema } from '../context/TemaContext';
 
 export default function CatalogoScreen({ navigation }) {
+  const { colores } = useTema();
   const [juegos, setJuegos] = useState([]);
   const [cargando, setCargando] = useState(true);
+  const [refrescando, setRefrescando] = useState(false);
   const [error, setError] = useState(null);
   const [estadoBanner, setEstadoBanner] = useState(null);
 
   useEffect(() => {
-  cargarJuegos();
+    cargarJuegos();
 
-  const dejarDeEscuchar = escucharCambiosDeConexion((conectado) => {
-    if (conectado) {
-      setEstadoBanner('sincronizando');
+    const dejarDeEscuchar = escucharCambiosDeConexion((conectado) => {
+      if (conectado) {
+        setEstadoBanner('sincronizando');
+        sincronizarCarritoConServidor()
+          .catch(() => {})
+          .finally(() => {
+            cargarJuegos();
+            setTimeout(() => setEstadoBanner(null), 2000);
+          });
+      } else {
+        setEstadoBanner('offline');
+      }
+    });
 
-      // Al volver la conexión: primero sincronizamos el carrito pendiente,
-      // y luego refrescamos el catálogo con lo más reciente del servidor.
-      sincronizarCarritoConServidor()
-        .catch(() => {}) // si falla, no interrumpimos la app; se reintentará después
-        .finally(() => {
-          cargarJuegos();
-          setTimeout(() => setEstadoBanner(null), 2000);
-        });
-    } else {
-      setEstadoBanner('offline');
-    }
-  });
-
-  return dejarDeEscuchar;
-}, []);
+    return dejarDeEscuchar;
+  }, []);
 
   async function cargarJuegos() {
     try {
@@ -45,54 +43,60 @@ export default function CatalogoScreen({ navigation }) {
       const conectado = await hayConexion();
 
       if (conectado) {
-        // Online: pedimos al backend y actualizamos la copia local
         const datos = await obtenerJuegos();
         setJuegos(datos);
         guardarCatalogoLocal(datos);
         setError(null);
       } else {
-        // Offline: leemos lo que ya teníamos guardado en el celular
         const datosLocales = obtenerCatalogoLocal();
         setJuegos(datosLocales);
         setEstadoBanner('offline');
         setError(datosLocales.length === 0 ? 'No hay catálogo guardado localmente todavía.' : null);
       }
     } catch (err) {
-      // Si falla la petición al backend, intentamos con lo local como respaldo
       const datosLocales = obtenerCatalogoLocal();
       setJuegos(datosLocales);
       setError(datosLocales.length === 0 ? 'No se pudo cargar el catálogo.' : null);
     } finally {
       setCargando(false);
+      setRefrescando(false);
     }
+  }
+
+  function manejarRefrescar() {
+    setRefrescando(true);
+    cargarJuegos();
   }
 
   if (cargando) {
     return (
-      <View style={estilos.centrado}>
-        <ActivityIndicator size="large" color="#4ade80" />
+      <View style={[estilos.centrado, { backgroundColor: colores.fondo }]}>
+        <ActivityIndicator size="large" color={colores.primario} />
       </View>
     );
   }
 
   return (
-    <View style={estilos.contenedor}>
+    <View style={[estilos.contenedor, { backgroundColor: colores.fondo }]}>
       <BannerConexion estado={estadoBanner} />
 
       {error ? (
-        <View style={estilos.centrado}>
-          <Text style={estilos.textoError}>{error}</Text>
+        <View style={[estilos.centrado, { backgroundColor: colores.fondo }]}>
+          <Text style={{ color: colores.peligro, fontSize: 16 }}>{error}</Text>
         </View>
       ) : (
         <FlatList
           data={juegos}
           keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={{ padding: 12 }}
+          numColumns={2}
+          columnWrapperStyle={estilos.fila}
+          contentContainerStyle={estilos.listaContenido}
+          ListHeaderComponent={
+            <Text style={[estilos.contador, { color: colores.textoSecundario }]}>{juegos.length} juegos disponibles</Text>
+          }
+          refreshControl={<RefreshControl refreshing={refrescando} onRefresh={manejarRefrescar} tintColor={colores.primario} />}
           renderItem={({ item }) => (
-            <JuegoCard
-              juego={item}
-              alPresionar={() => navigation.navigate('DetalleJuego', { juegoId: item.id })}
-            />
+            <JuegoCard juego={item} alPresionar={() => navigation.navigate('DetalleJuego', { juegoId: item.id })} />
           )}
         />
       )}
@@ -101,18 +105,9 @@ export default function CatalogoScreen({ navigation }) {
 }
 
 const estilos = StyleSheet.create({
-  contenedor: {
-    flex: 1,
-    backgroundColor: '#12121e',
-  },
-  centrado: {
-    flex: 1,
-    backgroundColor: '#12121e',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  textoError: {
-    color: '#f87171',
-    fontSize: 16,
-  },
+  contenedor: { flex: 1 },
+  centrado: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  listaContenido: { padding: 12 },
+  fila: { justifyContent: 'space-between' },
+  contador: { fontSize: 13, marginBottom: 12, marginLeft: 4 },
 });

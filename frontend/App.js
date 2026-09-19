@@ -1,14 +1,17 @@
 // App.js
-// Punto de entrada de la aplicación.
-
 import { useEffect } from 'react';
 import AppNavigator from './navigation/AppNavigator';
 import { inicializarBaseLocal } from './database/sqlite';
+import { TemaProvider } from './context/TemaContext';
 
 export default function App() {
   useEffect(() => {
     inicializarBaseLocal();
   }, []);
 
-  return <AppNavigator />;
+  return (
+    <TemaProvider>
+      <AppNavigator />
+    </TemaProvider>
+  );
 }

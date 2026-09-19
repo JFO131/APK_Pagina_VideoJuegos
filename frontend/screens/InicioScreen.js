@@ -1,75 +1,37 @@
-// Pantalla de bienvenida con botones para ir a Login o Registro.
-
+// screens/InicioScreen.js
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useTema } from '../context/TemaContext';
 
 export default function InicioScreen({ navigation }) {
+  const { colores } = useTema();
+
   return (
-    <View style={estilos.contenedor}>
-      <Text style={estilos.titulo}>🎮 Tienda de Videojuegos</Text>
-      <Text style={estilos.subtitulo}>Los mejores juegos, en un solo lugar</Text>
+    <LinearGradient colors={colores.fondoDegradado} style={estilos.contenedor}>
+      <View style={[estilos.circuloIcono, { backgroundColor: `${colores.primario}26` }]}>
+        <Text style={estilos.emojiIcono}>🎮</Text>
+      </View>
 
-      <TouchableOpacity
-        style={estilos.botonPrimario}
-        onPress={() => navigation.navigate('Login')}
-      >
-        <Text style={estilos.textoBotonPrimario}>Iniciar sesión</Text>
+      <Text style={[estilos.titulo, { color: colores.texto }]}>Tienda de Videojuegos</Text>
+      <Text style={[estilos.subtitulo, { color: colores.textoSecundario }]}>Los mejores juegos, en un solo lugar</Text>
+
+      <TouchableOpacity style={[estilos.botonPrimario, { backgroundColor: colores.primario }]} onPress={() => navigation.navigate('Login')}>
+        <Text style={{ color: colores.fondo, fontWeight: 'bold', fontSize: 16 }}>Iniciar sesión</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        style={estilos.botonSecundario}
-        onPress={() => navigation.navigate('Registro')}
-      >
-        <Text style={estilos.textoBotonSecundario}>Crear cuenta</Text>
+      <TouchableOpacity style={[estilos.botonSecundario, { borderColor: colores.primario }]} onPress={() => navigation.navigate('Registro')}>
+        <Text style={{ color: colores.primario, fontWeight: 'bold', fontSize: 16 }}>Crear cuenta</Text>
       </TouchableOpacity>
-    </View>
+    </LinearGradient>
   );
 }
 
 const estilos = StyleSheet.create({
-  contenedor: {
-    flex: 1,
-    backgroundColor: '#12121e',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  titulo: {
-    color: '#fff',
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  subtitulo: {
-    color: '#a0a0c0',
-    fontSize: 15,
-    marginBottom: 40,
-  },
-  botonPrimario: {
-    backgroundColor: '#4ade80',
-    paddingVertical: 14,
-    paddingHorizontal: 40,
-    borderRadius: 10,
-    width: '100%',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  textoBotonPrimario: {
-    color: '#12121e',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  botonSecundario: {
-    borderColor: '#4ade80',
-    borderWidth: 1.5,
-    paddingVertical: 14,
-    paddingHorizontal: 40,
-    borderRadius: 10,
-    width: '100%',
-    alignItems: 'center',
-  },
-  textoBotonSecundario: {
-    color: '#4ade80',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
+  contenedor: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
+  circuloIcono: { width: 96, height: 96, borderRadius: 48, justifyContent: 'center', alignItems: 'center', marginBottom: 24 },
+  emojiIcono: { fontSize: 44 },
+  titulo: { fontSize: 28, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' },
+  subtitulo: { fontSize: 15, marginBottom: 40 },
+  botonPrimario: { paddingVertical: 14, paddingHorizontal: 40, borderRadius: 12, width: '100%', alignItems: 'center', marginBottom: 14 },
+  botonSecundario: { borderWidth: 1.5, paddingVertical: 14, paddingHorizontal: 40, borderRadius: 12, width: '100%', alignItems: 'center' },
 });

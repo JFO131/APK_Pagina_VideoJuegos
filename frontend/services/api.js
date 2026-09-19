@@ -84,11 +84,60 @@ export async function sincronizarCarrito(token, items) {
     body: JSON.stringify({ items }),
   });
 
-  const datos = await respuesta.json();
+  const datos = await leerRespuesta(respuesta);
 
   if (!respuesta.ok) {
     throw new Error(datos.mensaje || 'No se pudo sincronizar el carrito');
   }
 
+  return datos;
+}
+
+// Registra la compra en el backend
+export async function registrarCompra(token, items) {
+  const respuesta = await fetch(`${URL_API}/compras`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ items }),
+  });
+
+  const datos = await respuesta.json();
+
+  if (!respuesta.ok) {
+    throw new Error(datos.mensaje || 'No se pudo registrar la compra');
+  }
+
+  return datos;
+}
+
+export async function actualizarPerfil(token, nombre, correo) {
+  const respuesta = await fetch(`${URL_API}/auth/perfil`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ nombre, correo }),
+  });
+  const datos = await leerRespuesta(respuesta);
+  if (!respuesta.ok) throw new Error(datos.mensaje || 'No se pudo actualizar el perfil');
+  return datos;
+}
+
+export async function cambiarContrasena(token, contrasenaActual, contrasenaNueva) {
+  const respuesta = await fetch(`${URL_API}/auth/contrasena`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ contrasenaActual, contrasenaNueva }),
+  });
+  const datos = await leerRespuesta(respuesta);
+  if (!respuesta.ok) throw new Error(datos.mensaje || 'No se pudo cambiar la contraseña');
+  return datos;
+}
+
+export async function obtenerHistorialCompras(token) {
+  const respuesta = await fetch(`${URL_API}/compras`, { headers: { Authorization: `Bearer ${token}` } });
+  const datos = await leerRespuesta(respuesta);
+  if (!respuesta.ok) throw new Error(datos.mensaje || 'No se pudo obtener el historial');
   return datos;
 }

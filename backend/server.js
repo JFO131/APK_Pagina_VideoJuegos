@@ -4,7 +4,8 @@ const express = require('express');
 const cors = require('cors');
 const juegosRoutes = require('./routes/juegos.routes');
 const authRoutes = require('./routes/auth.routes');
-const carritoRoutes = require('./routes/carrito.routes'); // NUEVO
+const carritoRoutes = require('./routes/carrito.routes');
+const comprasRoutes = require('./routes/compras.routes'); // NUEVO
 
 const app = express();
 const PUERTO = 3000;
@@ -14,7 +15,8 @@ app.use(express.json());
 
 app.use('/api/juegos', juegosRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/carrito', carritoRoutes); // NUEVO
+app.use('/api/carrito', carritoRoutes);
+app.use('/api/compras', comprasRoutes); // NUEVO
 
 app.get('/', (req, res) => {
   res.json({ mensaje: 'API de la tienda de videojuegos funcionando' });

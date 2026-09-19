@@ -1,13 +1,16 @@
-// Muestra la información completa de un videojuego y permite agregarlo al carrito.
-
+// screens/DetalleJuegoScreen.js
 import { useState, useEffect } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { obtenerJuegoPorId } from '../services/api';
 import { obtenerCatalogoLocal, agregarAlCarritoLocal } from '../database/sqlite';
 import { hayConexion } from '../services/conexion';
+import { obtenerIcono } from '../constants/generos';
+import { useTema } from '../context/TemaContext';
 
 export default function DetalleJuegoScreen({ route, navigation }) {
   const { juegoId } = route.params;
+  const { colores } = useTema();
   const [juego, setJuego] = useState(null);
   const [cargando, setCargando] = useState(true);
 
@@ -19,21 +22,15 @@ export default function DetalleJuegoScreen({ route, navigation }) {
     try {
       setCargando(true);
       const conectado = await hayConexion();
-
       if (conectado) {
-        const datos = await obtenerJuegoPorId(juegoId);
-        setJuego(datos);
+        setJuego(await obtenerJuegoPorId(juegoId));
       } else {
-        // Sin internet, buscamos el juego en el catálogo guardado localmente
-        const catalogoLocal = obtenerCatalogoLocal();
-        const encontrado = catalogoLocal.find((j) => j.id === juegoId);
-        setJuego(encontrado || null);
+        const local = obtenerCatalogoLocal();
+        setJuego(local.find((j) => j.id === juegoId) || null);
       }
     } catch (error) {
-      // Si falla la petición al backend, intentamos con lo local
-      const catalogoLocal = obtenerCatalogoLocal();
-      const encontrado = catalogoLocal.find((j) => j.id === juegoId);
-      setJuego(encontrado || null);
+      const local = obtenerCatalogoLocal();
+      setJuego(local.find((j) => j.id === juegoId) || null);
     } finally {
       setCargando(false);
     }
@@ -47,32 +44,34 @@ export default function DetalleJuegoScreen({ route, navigation }) {
     ]);
   }
 
-  if (cargando) {
-    return <View style={estilos.centrado} />;
-  }
+  if (cargando) return <View style={[estilos.centrado, { backgroundColor: colores.fondo }]} />;
 
   if (!juego) {
     return (
-      <View style={estilos.centrado}>
-        <Text style={estilos.textoError}>No se pudo cargar este videojuego.</Text>
+      <View style={[estilos.centrado, { backgroundColor: colores.fondo }]}>
+        <Text style={{ color: colores.peligro, fontSize: 16 }}>No se pudo cargar este videojuego.</Text>
       </View>
     );
   }
 
   return (
-    <ScrollView style={estilos.contenedor}>
-      <Image source={{ uri: juego.imagen }} style={estilos.imagen} />
+    <ScrollView style={{ flex: 1, backgroundColor: colores.fondo }}>
+      <View style={[estilos.banner, { backgroundColor: `#${juego.imagen}` }]}>
+        <Ionicons name={obtenerIcono(juego.genero)} size={80} color="rgba(255,255,255,0.3)" />
+      </View>
 
       <View style={estilos.info}>
-        <Text style={estilos.nombre}>{juego.nombre}</Text>
-        <Text style={estilos.genero}>{juego.genero}</Text>
-        <Text style={estilos.precio}>${juego.precio.toFixed(2)}</Text>
+        <Text style={[estilos.nombre, { color: colores.texto }]}>{juego.nombre}</Text>
+        <Text style={[estilos.genero, { color: colores.textoSecundario }]}>{juego.genero}</Text>
+        <Text style={[estilos.precio, { color: colores.primario }]}>
+          {juego.precio === 0 ? 'Gratis' : `$${juego.precio.toFixed(2)}`}
+        </Text>
 
-        <Text style={estilos.tituloDescripcion}>Descripción</Text>
-        <Text style={estilos.descripcion}>{juego.descripcion}</Text>
+        <Text style={[estilos.tituloDescripcion, { color: colores.texto }]}>Descripción</Text>
+        <Text style={[estilos.descripcion, { color: colores.textoSecundario }]}>{juego.descripcion}</Text>
 
-        <TouchableOpacity style={estilos.boton} onPress={manejarAgregarAlCarrito}>
-          <Text style={estilos.textoBoton}>Agregar al carrito</Text>
+        <TouchableOpacity style={[estilos.boton, { backgroundColor: colores.primario }]} onPress={manejarAgregarAlCarrito}>
+          <Text style={{ color: colores.fondo, fontWeight: 'bold', fontSize: 16 }}>Agregar al carrito</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -80,65 +79,13 @@ export default function DetalleJuegoScreen({ route, navigation }) {
 }
 
 const estilos = StyleSheet.create({
-  contenedor: {
-    flex: 1,
-    backgroundColor: '#12121e',
-  },
-  centrado: {
-    flex: 1,
-    backgroundColor: '#12121e',
-  },
-  imagen: {
-    width: '100%',
-    height: 220,
-  },
-  info: {
-    padding: 20,
-  },
-  nombre: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  genero: {
-    color: '#a0a0c0',
-    fontSize: 14,
-    marginTop: 4,
-  },
-  precio: {
-    color: '#4ade80',
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginTop: 12,
-  },
-  tituloDescripcion: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 6,
-  },
-  descripcion: {
-    color: '#c0c0d0',
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  boton: {
-    backgroundColor: '#4ade80',
-    padding: 16,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 28,
-  },
-  textoBoton: {
-    color: '#12121e',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  textoError: {
-    color: '#f87171',
-    fontSize: 16,
-    textAlign: 'center',
-    marginTop: 40,
-  },
+  centrado: { flex: 1 },
+  banner: { width: '100%', height: 220, justifyContent: 'center', alignItems: 'center' },
+  info: { padding: 20 },
+  nombre: { fontSize: 24, fontWeight: 'bold' },
+  genero: { fontSize: 14, marginTop: 4 },
+  precio: { fontSize: 22, fontWeight: 'bold', marginTop: 12 },
+  tituloDescripcion: { fontSize: 16, fontWeight: 'bold', marginTop: 20, marginBottom: 6 },
+  descripcion: { fontSize: 14, lineHeight: 20 },
+  boton: { padding: 16, borderRadius: 10, alignItems: 'center', marginTop: 28 },
 });

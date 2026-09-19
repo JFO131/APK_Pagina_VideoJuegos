@@ -74,4 +74,48 @@ function iniciarSesion(req, res) {
   });
 }
 
-module.exports = { registrar, iniciarSesion };
+// PUT /api/auth/perfil
+function actualizarPerfil(req, res) {
+  const usuarioId = req.usuarioId;
+  const { nombre, correo } = req.body;
+
+  if (!nombre || !correo) {
+    return res.status(400).json({ mensaje: 'Nombre y correo son obligatorios' });
+  }
+
+  const correoEnUso = db.prepare('SELECT id FROM usuarios WHERE correo = ? AND id != ?').get(correo, usuarioId);
+  if (correoEnUso) {
+    return res.status(409).json({ mensaje: 'Ese correo ya está en uso por otra cuenta' });
+  }
+
+  db.prepare('UPDATE usuarios SET nombre = ?, correo = ? WHERE id = ?').run(nombre, correo, usuarioId);
+  const usuarioActualizado = db.prepare('SELECT id, nombre, correo FROM usuarios WHERE id = ?').get(usuarioId);
+
+  res.json({ mensaje: 'Perfil actualizado correctamente', usuario: usuarioActualizado });
+}
+
+// PUT /api/auth/contrasena
+function cambiarContrasena(req, res) {
+  const usuarioId = req.usuarioId;
+  const { contrasenaActual, contrasenaNueva } = req.body;
+
+  if (!contrasenaActual || !contrasenaNueva) {
+    return res.status(400).json({ mensaje: 'Completa ambos campos de contraseña' });
+  }
+  if (contrasenaNueva.length < 6) {
+    return res.status(400).json({ mensaje: 'La nueva contraseña debe tener al menos 6 caracteres' });
+  }
+
+  const usuario = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(usuarioId);
+  const esValida = bcrypt.compareSync(contrasenaActual, usuario.contrasena);
+  if (!esValida) {
+    return res.status(401).json({ mensaje: 'La contraseña actual es incorrecta' });
+  }
+
+  const nuevaEncriptada = bcrypt.hashSync(contrasenaNueva, 10);
+  db.prepare('UPDATE usuarios SET contrasena = ? WHERE id = ?').run(nuevaEncriptada, usuarioId);
+
+  res.json({ mensaje: 'Contraseña actualizada correctamente' });
+}
+
+module.exports = { registrar, iniciarSesion, actualizarPerfil, cambiarContrasena };
