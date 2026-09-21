@@ -1,11 +1,12 @@
 // screens/DetalleJuegoScreen.js
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { obtenerJuegoPorId } from '../services/api';
 import { obtenerCatalogoLocal, agregarAlCarritoLocal } from '../database/sqlite';
 import { hayConexion } from '../services/conexion';
 import { obtenerIcono } from '../constants/generos';
+import { obtenerImagenLocal } from '../constants/imagenesJuegos';
 import { useTema } from '../context/TemaContext';
 
 export default function DetalleJuegoScreen({ route, navigation }) {
@@ -56,9 +57,26 @@ export default function DetalleJuegoScreen({ route, navigation }) {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colores.fondo }}>
-      <View style={[estilos.banner, { backgroundColor: `#${juego.imagen}` }]}>
-        <Ionicons name={obtenerIcono(juego.genero)} size={80} color="rgba(255,255,255,0.3)" />
-      </View>
+      {(() => {
+        const imagenLocal = obtenerImagenLocal(juego.nombre);
+        const tieneImagenRemota = !imagenLocal && juego.imagen && juego.imagen.startsWith('http');
+        const imagen = imagenLocal || (tieneImagenRemota ? { uri: juego.imagen } : null);
+
+        if (imagen) {
+          return (
+            <View style={estilos.contenedorBanner}>
+              <Image source={imagen} style={StyleSheet.absoluteFillObject} blurRadius={15} opacity={0.3} resizeMode="cover" />
+              <Image source={imagen} style={estilos.imagenBanner} resizeMode="contain" />
+            </View>
+          );
+        }
+
+        return (
+          <View style={[estilos.contenedorBanner, { backgroundColor: colores.tarjetaClara }]}>
+            <Ionicons name={obtenerIcono(juego.genero)} size={80} color="rgba(255,255,255,0.3)" />
+          </View>
+        );
+      })()}
 
       <View style={estilos.info}>
         <Text style={[estilos.nombre, { color: colores.texto }]}>{juego.nombre}</Text>
@@ -80,7 +98,18 @@ export default function DetalleJuegoScreen({ route, navigation }) {
 
 const estilos = StyleSheet.create({
   centrado: { flex: 1 },
-  banner: { width: '100%', height: 220, justifyContent: 'center', alignItems: 'center' },
+  contenedorBanner: {
+    width: '100%',
+    height: 280,
+    backgroundColor: '#0a0a14',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  imagenBanner: {
+    width: '90%',
+    height: '90%',
+  },
   info: { padding: 20 },
   nombre: { fontSize: 24, fontWeight: 'bold' },
   genero: { fontSize: 14, marginTop: 4 },

@@ -28,3 +28,8 @@ export async function cerrarSesion() {
   await AsyncStorage.removeItem(CLAVE_TOKEN);
   await AsyncStorage.removeItem(CLAVE_USUARIO);
 }
+
+// Actualiza los datos del usuario en la sesión guardada
+export async function actualizarUsuarioSesion(usuario) {
+  await AsyncStorage.setItem(CLAVE_USUARIO, JSON.stringify(usuario));
+}

@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { obtenerSesion, cerrarSesion } from '../services/sesion';
 import { useTema } from '../context/TemaContext';
+import { tipografia } from '../constants/tipografia';
 
 export default function CuentaScreen({ navigation }) {
   const { colores, esOscuro, cambiarTema } = useTema();
@@ -83,10 +84,10 @@ const estilos = StyleSheet.create({
   contenedor: { flex: 1, alignItems: 'center', paddingTop: 50, paddingHorizontal: 20 },
   centrado: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
   avatar: { width: 80, height: 80, borderRadius: 40, justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
-  nombre: { fontSize: 20, fontWeight: 'bold' },
+  nombre: { fontSize: 20, fontFamily: tipografia.bold },
   botonEntrar: { paddingVertical: 12, paddingHorizontal: 30, borderRadius: 10 },
   opciones: { width: '100%', borderRadius: 14, marginBottom: 24, overflow: 'hidden' },
   opcionFila: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12 },
-  textoOpcion: { flex: 1, fontSize: 14 },
+  textoOpcion: { flex: 1, fontSize: 14, fontFamily: tipografia.regular },
   botonPeligro: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, paddingVertical: 12, paddingHorizontal: 24, borderRadius: 10 },
 });

@@ -15,6 +15,7 @@ import EditarPerfilScreen from '../screens/EditarPerfilScreen';
 import CambiarContrasenaScreen from '../screens/CambiarContrasenaScreen';
 import HistorialComprasScreen from '../screens/HistorialComprasScreen';
 import { useTema } from '../context/TemaContext';
+import { tipografia } from '../constants/tipografia';
 
 const Stack = createNativeStackNavigator();
 
@@ -25,7 +26,11 @@ export default function AppNavigator() {
     <NavigationContainer>
       <Stack.Navigator
         initialRouteName="Inicio"
-        screenOptions={{ headerStyle: { backgroundColor: colores.fondo }, headerTintColor: colores.texto }}
+        screenOptions={{
+          headerStyle: { backgroundColor: colores.fondo },
+          headerTintColor: colores.texto,
+          headerTitleStyle: { fontFamily: tipografia.semibold },
+        }}
       >
         <Stack.Screen name="Inicio" component={InicioScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Iniciar sesión' }} />

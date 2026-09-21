@@ -1,17 +1,26 @@
 // components/ItemCarrito.js
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { obtenerIcono } from '../constants/generos';
+import { obtenerImagenLocal } from '../constants/imagenesJuegos';
 import { useTema } from '../context/TemaContext';
 
 export default function ItemCarrito({ item, alCambiarCantidad, alEliminar }) {
   const { colores } = useTema();
   const subtotal = item.precio * item.cantidad;
+  const imagenLocal = obtenerImagenLocal(item.nombre);
+  const tieneImagenRemota = !imagenLocal && item.imagen && item.imagen.startsWith('http');
 
   return (
     <View style={[estilos.fila, { backgroundColor: colores.tarjeta }]}>
-      <View style={[estilos.miniatura, { backgroundColor: `#${item.imagen}` }]}>
-        <Ionicons name={obtenerIcono(item.genero)} size={22} color="rgba(255,255,255,0.5)" />
+      <View style={[estilos.miniatura, { backgroundColor: colores.tarjetaClara }]}>
+        {imagenLocal ? (
+          <Image source={imagenLocal} style={estilos.imagenMiniatura} resizeMode="cover" />
+        ) : tieneImagenRemota ? (
+          <Image source={{ uri: item.imagen }} style={estilos.imagenMiniatura} resizeMode="cover" />
+        ) : (
+          <Ionicons name={obtenerIcono(item.genero)} size={22} color="rgba(255,255,255,0.5)" />
+        )}
       </View>
 
       <View style={estilos.info}>
@@ -41,7 +50,8 @@ export default function ItemCarrito({ item, alCambiarCantidad, alEliminar }) {
 
 const estilos = StyleSheet.create({
   fila: { flexDirection: 'row', borderRadius: 12, padding: 10, marginBottom: 12, alignItems: 'center' },
-  miniatura: { width: 60, height: 60, borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
+  miniatura: { width: 60, height: 60, borderRadius: 8, justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
+  imagenMiniatura: { width: '100%', height: '100%' },
   info: { flex: 1, marginLeft: 10 },
   nombre: { fontSize: 14, fontWeight: 'bold' },
   precioUnitario: { fontSize: 12, marginTop: 2 },

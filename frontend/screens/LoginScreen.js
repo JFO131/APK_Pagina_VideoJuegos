@@ -1,9 +1,10 @@
 // screens/LoginScreen.js
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
 import { iniciarSesion } from '../services/api';
 import { guardarSesion } from '../services/sesion';
 import { useTema } from '../context/TemaContext';
+import { tipografia } from '../constants/tipografia';
 
 export default function LoginScreen({ navigation }) {
   const { colores } = useTema();
@@ -29,20 +30,26 @@ export default function LoginScreen({ navigation }) {
   }
 
   return (
-    <View style={[estilos.contenedor, { backgroundColor: colores.fondo }]}>
-      <Text style={[estilos.titulo, { color: colores.texto }]}>Iniciar sesión</Text>
-      <TextInput style={[estilos.input, { backgroundColor: colores.tarjeta, color: colores.texto }]} placeholder="Correo" placeholderTextColor={colores.textoTenue} value={correo} onChangeText={setCorreo} autoCapitalize="none" keyboardType="email-address" />
-      <TextInput style={[estilos.input, { backgroundColor: colores.tarjeta, color: colores.texto }]} placeholder="Contraseña" placeholderTextColor={colores.textoTenue} value={contrasena} onChangeText={setContrasena} secureTextEntry />
-      <TouchableOpacity style={[estilos.boton, { backgroundColor: colores.primario }]} onPress={manejarLogin} disabled={cargando}>
-        <Text style={{ color: colores.fondo, fontWeight: 'bold', fontSize: 16 }}>{cargando ? 'Ingresando...' : 'Ingresar'}</Text>
-      </TouchableOpacity>
-    </View>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: colores.fondo }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+    >
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={estilos.contenedor} keyboardShouldPersistTaps="handled">
+        <Text style={[estilos.titulo, { color: colores.texto }]}>Iniciar sesión</Text>
+        <TextInput style={[estilos.input, { backgroundColor: colores.tarjeta, color: colores.texto }]} placeholder="Correo" placeholderTextColor={colores.textoTenue} value={correo} onChangeText={setCorreo} autoCapitalize="none" keyboardType="email-address" />
+        <TextInput style={[estilos.input, { backgroundColor: colores.tarjeta, color: colores.texto }]} placeholder="Contraseña" placeholderTextColor={colores.textoTenue} value={contrasena} onChangeText={setContrasena} secureTextEntry />
+        <TouchableOpacity style={[estilos.boton, { backgroundColor: colores.primario }]} onPress={manejarLogin} disabled={cargando}>
+          <Text style={{ color: colores.fondo, fontFamily: tipografia.semibold, fontSize: 16 }}>{cargando ? 'Ingresando...' : 'Ingresar'}</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const estilos = StyleSheet.create({
-  contenedor: { flex: 1, justifyContent: 'center', padding: 24 },
-  titulo: { fontSize: 24, fontWeight: 'bold', marginBottom: 24, textAlign: 'center' },
-  input: { padding: 14, borderRadius: 10, marginBottom: 14 },
+  contenedor: { flexGrow: 1, justifyContent: 'center', padding: 24 },
+  titulo: { fontSize: 24, fontFamily: tipografia.bold, marginBottom: 24, textAlign: 'center' },
+  input: { padding: 14, borderRadius: 10, marginBottom: 14, fontFamily: tipografia.regular },
   boton: { padding: 14, borderRadius: 10, alignItems: 'center', marginTop: 8 },
 });

@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Expo & build outputs
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native folders (managed workflow)
+/ios
+/android
+.kotlin/
+
+# Secrets & credentials
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Debug & logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# IDEs & system
+.idea/
+.vscode/
+.DS_Store
+*.pem
+.claude/
+
+# Env files
+.env*.local
