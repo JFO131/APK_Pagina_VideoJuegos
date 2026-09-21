@@ -4,7 +4,7 @@
 // IMPORTANTE: si pruebas en un celular físico o emulador,
 // "localhost" no funciona porque apunta al propio celular.
 // Debes usar la IP de tu computadora en la red local, ej: "192.168.1.100"
-const URL_API = 'https://tienda-videojuegos-backend.onrender.com';
+const URL_API = 'https://apk-pagina-videojuegos.onrender.com/api';
 const URL_JUEGOS = `${URL_API}/juegos`;
 
 async function leerRespuesta(respuesta) {

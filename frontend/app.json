@@ -34,8 +34,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "df28a031-0a1e-4a6b-bdbe-f674223d97a2"
+        "projectId": "ed72c794-3e2a-49fd-9f4b-9ec7f0e742cf"
       }
-    }
+    },
+    "owner": "julian10082s-team"
   }
 }

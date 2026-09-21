@@ -12,8 +12,8 @@ export const temaOscuro = {
   texto: '#ffffff',
   textoSecundario: '#a0a0c0',
   textoTenue: '#666666',
-  primario: '#4ade80',
-  primarioDegradado: ['#4ade80', '#22c55e'],
+  primario: '#7f19df',
+  primarioDegradado: ['#af4ade', '#7f19df'],
   peligro: '#f87171',
   info: '#60a5fa',
 };
@@ -28,8 +28,8 @@ export const temaClaro = {
   texto: '#1a1a2e',
   textoSecundario: '#5a5a70',
   textoTenue: '#9a9aa8',
-  primario: '#16a34a',
-  primarioDegradado: ['#22c55e', '#16a34a'],
+  primario: '#7f19df',
+  primarioDegradado: ['#af4ade', '#7f19df'],
   peligro: '#dc2626',
   info: '#2563eb',
 };
