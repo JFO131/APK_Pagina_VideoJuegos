@@ -1,0 +1,5 @@
+# Ignore backend and IDE folders from EAS build
+backend/
+.idea/
+.vscode/
+node_modules/
