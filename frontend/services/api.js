@@ -4,7 +4,7 @@
 // IMPORTANTE: si pruebas en un celular físico o emulador,
 // "localhost" no funciona porque apunta al propio celular.
 // Debes usar la IP de tu computadora en la red local, ej: "192.168.1.100"
-const URL_API = 'http://192.168.1.7:3000/api';
+const URL_API = 'http://192.168.137.1:3000/api';
 const URL_JUEGOS = `${URL_API}/juegos`;
 
 async function leerRespuesta(respuesta) {

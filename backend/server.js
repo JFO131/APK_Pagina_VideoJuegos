@@ -8,7 +8,7 @@ const carritoRoutes = require('./routes/carrito.routes');
 const comprasRoutes = require('./routes/compras.routes'); // NUEVO
 
 const app = express();
-const PUERTO = 3000;
+const PUERTO = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());

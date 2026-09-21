@@ -1,0 +1,4 @@
+node_modules/
+database/tienda.db
+database/tienda.db-shm
+database/tienda.db-wal
