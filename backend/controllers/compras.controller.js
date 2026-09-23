@@ -3,9 +3,9 @@ const db = require('../config/db');
 // POST /api/compras
 // Registra una compra completa: la cabecera (compras) y sus productos (detalle_compras).
 // También vacía el carrito del usuario en el servidor, porque ya se convirtió en una compra.
-function crearCompra(req, res) {
+async function crearCompra(req, res) {
   const usuarioId = req.usuarioId;
-  const { items } = req.body; // [{ videojuego_id, cantidad, precio_unitario }]
+  const { items } = req.body;
 
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ mensaje: 'El carrito está vacío' });
@@ -22,22 +22,20 @@ function crearCompra(req, res) {
   `);
   const vaciarCarrito = db.prepare('DELETE FROM carrito WHERE usuario_id = ?');
 
-  // Todo esto pasa como una sola transacción: si algo falla,
-  // no queda una compra registrada a medias.
-  const registrarCompraCompleta = db.transaction(() => {
-    const resultado = insertarCompra.run(usuarioId, total);
+  const registrarCompraCompleta = db.transaction(async () => {
+    const resultado = await insertarCompra.run(usuarioId, total);
     const compraId = resultado.lastInsertRowid;
 
     for (const item of items) {
-      insertarDetalle.run(compraId, item.videojuego_id, item.cantidad, item.precio_unitario);
+      await insertarDetalle.run(compraId, item.videojuego_id, item.cantidad, item.precio_unitario);
     }
 
-    vaciarCarrito.run(usuarioId);
+    await vaciarCarrito.run(usuarioId);
 
     return compraId;
   });
 
-  const compraId = registrarCompraCompleta();
+  const compraId = await registrarCompraCompleta();
 
   res.status(201).json({
     mensaje: 'Compra registrada correctamente',
@@ -47,10 +45,10 @@ function crearCompra(req, res) {
 }
 
 // GET /api/compras → historial de compras del usuario logueado
-function obtenerCompras(req, res) {
+async function obtenerCompras(req, res) {
   const usuarioId = req.usuarioId;
 
-  const compras = db.prepare(
+  const compras = await db.prepare(
     'SELECT * FROM compras WHERE usuario_id = ? ORDER BY fecha DESC'
   ).all(usuarioId);
 
@@ -61,10 +59,11 @@ function obtenerCompras(req, res) {
     WHERE d.compra_id = ?
   `);
 
-  const comprasConDetalle = compras.map((compra) => ({
-    ...compra,
-    productos: detalleStmt.all(compra.id),
-  }));
+  const comprasConDetalle = [];
+  for (const compra of compras) {
+    const productos = await detalleStmt.all(compra.id);
+    comprasConDetalle.push({ ...compra, productos });
+  }
 
   res.json(comprasConDetalle);
 }

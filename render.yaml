@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: apk-pagina-videojuegos
+    env: node
+    plan: free
+    region: oregon
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DATABASE_URL
+        sync: false
+      - key: CLAVE_SECRETA
+        generateValue: true
+
+ databases:
+  - name: apk-pagina-videojuegos-db
+    plan: free
+    databaseName: apk_pagina_videojuegos
+    user: apk_user

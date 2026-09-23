@@ -8,10 +8,9 @@ const db = require('../config/db');
 const { CLAVE_SECRETA } = require('../config/claves');
 
 // POST /api/auth/registro
-function registrar(req, res) {
+async function registrar(req, res) {
   const { nombre, correo, contrasena } = req.body;
 
-  // Validación básica de los campos
   if (!nombre || !correo || !contrasena) {
     return res.status(400).json({ mensaje: 'Todos los campos son obligatorios' });
   }
@@ -20,47 +19,42 @@ function registrar(req, res) {
     return res.status(400).json({ mensaje: 'La contraseña debe tener al menos 6 caracteres' });
   }
 
-  // Verificamos que el correo no esté ya registrado
-  const usuarioExistente = db.prepare('SELECT id FROM usuarios WHERE correo = ?').get(correo);
+  const usuarioExistente = await db.prepare('SELECT id FROM usuarios WHERE correo = ?').get(correo);
   if (usuarioExistente) {
     return res.status(409).json({ mensaje: 'Ya existe una cuenta con ese correo' });
   }
 
-  // Encriptamos la contraseña antes de guardarla
   const contrasenaEncriptada = bcrypt.hashSync(contrasena, 10);
-
-  const resultado = db.prepare(
+  const resultado = await db.prepare(
     'INSERT INTO usuarios (nombre, correo, contrasena) VALUES (?, ?, ?)'
   ).run(nombre, correo, contrasenaEncriptada);
 
   res.status(201).json({
     mensaje: 'Usuario registrado correctamente',
-    usuarioId: resultado.lastInsertRowid
+    usuarioId: resultado.lastInsertRowid,
   });
 }
 
 // POST /api/auth/login
-function iniciarSesion(req, res) {
+async function iniciarSesion(req, res) {
   const { correo, contrasena } = req.body;
 
   if (!correo || !contrasena) {
     return res.status(400).json({ mensaje: 'Correo y contraseña son obligatorios' });
   }
 
-  const usuario = db.prepare('SELECT * FROM usuarios WHERE correo = ?').get(correo);
+  const usuario = await db.prepare('SELECT * FROM usuarios WHERE correo = ?').get(correo);
 
   if (!usuario) {
     return res.status(401).json({ mensaje: 'Correo o contraseña incorrectos' });
   }
 
-  // Comparamos la contraseña escrita contra el hash guardado
   const contrasenaValida = bcrypt.compareSync(contrasena, usuario.contrasena);
 
   if (!contrasenaValida) {
     return res.status(401).json({ mensaje: 'Correo o contraseña incorrectos' });
   }
 
-  // Generamos el token que la app va a guardar
   const token = jwt.sign(
     { usuarioId: usuario.id, correo: usuario.correo },
     CLAVE_SECRETA,
@@ -70,12 +64,12 @@ function iniciarSesion(req, res) {
   res.json({
     mensaje: 'Sesión iniciada correctamente',
     token,
-    usuario: { id: usuario.id, nombre: usuario.nombre, correo: usuario.correo }
+    usuario: { id: usuario.id, nombre: usuario.nombre, correo: usuario.correo },
   });
 }
 
 // PUT /api/auth/perfil
-function actualizarPerfil(req, res) {
+async function actualizarPerfil(req, res) {
   const usuarioId = req.usuarioId;
   const { nombre, correo } = req.body;
 
@@ -83,19 +77,19 @@ function actualizarPerfil(req, res) {
     return res.status(400).json({ mensaje: 'Nombre y correo son obligatorios' });
   }
 
-  const correoEnUso = db.prepare('SELECT id FROM usuarios WHERE correo = ? AND id != ?').get(correo, usuarioId);
+  const correoEnUso = await db.prepare('SELECT id FROM usuarios WHERE correo = ? AND id != ?').get(correo, usuarioId);
   if (correoEnUso) {
     return res.status(409).json({ mensaje: 'Ese correo ya está en uso por otra cuenta' });
   }
 
-  db.prepare('UPDATE usuarios SET nombre = ?, correo = ? WHERE id = ?').run(nombre, correo, usuarioId);
-  const usuarioActualizado = db.prepare('SELECT id, nombre, correo FROM usuarios WHERE id = ?').get(usuarioId);
+  await db.prepare('UPDATE usuarios SET nombre = ?, correo = ? WHERE id = ?').run(nombre, correo, usuarioId);
+  const usuarioActualizado = await db.prepare('SELECT id, nombre, correo FROM usuarios WHERE id = ?').get(usuarioId);
 
   res.json({ mensaje: 'Perfil actualizado correctamente', usuario: usuarioActualizado });
 }
 
 // PUT /api/auth/contrasena
-function cambiarContrasena(req, res) {
+async function cambiarContrasena(req, res) {
   const usuarioId = req.usuarioId;
   const { contrasenaActual, contrasenaNueva } = req.body;
 
@@ -106,14 +100,14 @@ function cambiarContrasena(req, res) {
     return res.status(400).json({ mensaje: 'La nueva contraseña debe tener al menos 6 caracteres' });
   }
 
-  const usuario = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(usuarioId);
+  const usuario = await db.prepare('SELECT * FROM usuarios WHERE id = ?').get(usuarioId);
   const esValida = bcrypt.compareSync(contrasenaActual, usuario.contrasena);
   if (!esValida) {
     return res.status(401).json({ mensaje: 'La contraseña actual es incorrecta' });
   }
 
   const nuevaEncriptada = bcrypt.hashSync(contrasenaNueva, 10);
-  db.prepare('UPDATE usuarios SET contrasena = ? WHERE id = ?').run(nuevaEncriptada, usuarioId);
+  await db.prepare('UPDATE usuarios SET contrasena = ? WHERE id = ?').run(nuevaEncriptada, usuarioId);
 
   res.json({ mensaje: 'Contraseña actualizada correctamente' });
 }

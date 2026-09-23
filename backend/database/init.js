@@ -4,8 +4,57 @@
 
 const db = require('../config/db');
 
-function crearTablas() {
-  db.exec(`
+function obtenerSchemaSql() {
+  if (process.env.DATABASE_URL) {
+    return `
+      CREATE TABLE IF NOT EXISTS usuarios (
+        id SERIAL PRIMARY KEY,
+        nombre TEXT NOT NULL,
+        correo TEXT NOT NULL UNIQUE,
+        contrasena TEXT NOT NULL,
+        creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS videojuegos (
+        id SERIAL PRIMARY KEY,
+        nombre TEXT NOT NULL,
+        imagen TEXT,
+        precio NUMERIC(10,2) NOT NULL,
+        genero TEXT,
+        descripcion TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS carrito (
+        id SERIAL PRIMARY KEY,
+        usuario_id INTEGER NOT NULL,
+        videojuego_id INTEGER NOT NULL,
+        cantidad INTEGER NOT NULL DEFAULT 1,
+        local_id TEXT UNIQUE,
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
+        FOREIGN KEY (videojuego_id) REFERENCES videojuegos(id)
+      );
+
+      CREATE TABLE IF NOT EXISTS compras (
+        id SERIAL PRIMARY KEY,
+        usuario_id INTEGER NOT NULL,
+        total NUMERIC(10,2) NOT NULL,
+        fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+      );
+
+      CREATE TABLE IF NOT EXISTS detalle_compras (
+        id SERIAL PRIMARY KEY,
+        compra_id INTEGER NOT NULL,
+        videojuego_id INTEGER NOT NULL,
+        cantidad INTEGER NOT NULL,
+        precio_unitario NUMERIC(10,2) NOT NULL,
+        FOREIGN KEY (compra_id) REFERENCES compras(id),
+        FOREIGN KEY (videojuego_id) REFERENCES videojuegos(id)
+      );
+    `;
+  }
+
+  return `
     CREATE TABLE IF NOT EXISTS usuarios (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       nombre TEXT NOT NULL,
@@ -50,7 +99,11 @@ function crearTablas() {
       FOREIGN KEY (compra_id) REFERENCES compras(id),
       FOREIGN KEY (videojuego_id) REFERENCES videojuegos(id)
     );
-  `);
+  `;
+}
+
+async function crearTablas() {
+  await db.exec(obtenerSchemaSql());
 }
 
 // Genera una URL de portada con el nombre del juego sobre un fondo de color.
@@ -60,8 +113,8 @@ function generarPortada(nombre, colorFondo) {
   return `https://placehold.co/500x650/${colorFondo}/ffffff?text=${texto}&font=montserrat`;
 }
 
-function insertarDatosDePrueba() {
-  const cantidad = db.prepare('SELECT COUNT(*) AS total FROM videojuegos').get();
+async function insertarDatosDePrueba() {
+  const cantidad = await db.prepare('SELECT COUNT(*) AS total FROM videojuegos').get();
 
   if (cantidad.total > 0) {
     console.log('Ya hay videojuegos en la base de datos, no se insertan de nuevo.');
@@ -70,10 +123,9 @@ function insertarDatosDePrueba() {
 
   const insertar = db.prepare(`
     INSERT INTO videojuegos (nombre, imagen, precio, genero, descripcion)
-    VALUES (@nombre, @imagen, @precio, @genero, @descripcion)
+    VALUES (?, ?, ?, ?, ?)
   `);
 
-  // Colores de fondo para las portadas, uno por juego (se repiten en ciclo)
   const colores = [
     '1e3a5f', '5f1e3a', '3a5f1e', '5f3a1e', '1e5f3a', '3a1e5f',
     '2c2c54', '474787', 'aaa69d', '227093', '218c74', 'b33939',
@@ -108,15 +160,36 @@ function insertarDatosDePrueba() {
     { nombre: 'It Takes Two', genero: 'Aventura', precio: 39.99, descripcion: 'Una pareja convertida en muñecos debe cooperar para volver a ser humanos.' },
   ];
 
+  if (process.env.DATABASE_URL) {
+    const insertarTodos = db.transaction(async (tx, lista) => {
+      for (const [indice, juego] of lista.entries()) {
+        await tx.prepare(`
+          INSERT INTO videojuegos (nombre, imagen, precio, genero, descripcion)
+          VALUES (?, ?, ?, ?, ?)
+        `).run(
+          juego.nombre,
+          generarPortada(juego.nombre, colores[indice % colores.length]),
+          juego.precio,
+          juego.genero,
+          juego.descripcion,
+        );
+      }
+    });
+
+    await insertarTodos(juegos);
+    console.log(`${juegos.length} videojuegos de prueba insertados correctamente.`);
+    return;
+  }
+
   const insertarTodos = db.transaction((lista) => {
     lista.forEach((juego, indice) => {
-      insertar.run({
-        nombre: juego.nombre,
-        imagen: generarPortada(juego.nombre, colores[indice % colores.length]),
-        precio: juego.precio,
-        genero: juego.genero,
-        descripcion: juego.descripcion,
-      });
+      insertar.run(
+        juego.nombre,
+        generarPortada(juego.nombre, colores[indice % colores.length]),
+        juego.precio,
+        juego.genero,
+        juego.descripcion,
+      );
     });
   });
 
@@ -124,5 +197,9 @@ function insertarDatosDePrueba() {
   console.log(`${juegos.length} videojuegos de prueba insertados correctamente.`);
 }
 
-crearTablas();
-insertarDatosDePrueba();
+async function inicializarBase() {
+  await crearTablas();
+  await insertarDatosDePrueba();
+}
+
+module.exports = inicializarBase;
