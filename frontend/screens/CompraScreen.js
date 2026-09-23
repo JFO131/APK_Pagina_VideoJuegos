@@ -2,7 +2,7 @@
 import { useState, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { obtenerCarritoLocal, vaciarCarritoLocal } from '../database/sqlite';
+import { obtenerCarritoLocal, vaciarCarritoLocal, guardarCompraPendienteLocal } from '../database/sqlite';
 import { hayConexion } from '../services/conexion';
 import { obtenerSesion } from '../services/sesion';
 import { registrarCompra } from '../services/api';
@@ -15,23 +15,43 @@ export default function CompraScreen({ navigation }) {
 
   useFocusEffect(useCallback(() => { setItems(obtenerCarritoLocal()); }, []));
 
-  const total = items.reduce((suma, item) => suma + item.precio * item.cantidad, 0);
+  const total = items.reduce((suma, item) => suma + Number(item?.precio ?? 0) * Number(item?.cantidad ?? 0), 0);
 
   async function manejarConfirmarCompra() {
     const conectado = await hayConexion();
-    if (!conectado) {
-      Alert.alert('Sin conexión', 'Necesitas conexión a Internet para completar la compra. Tu carrito se mantiene guardado.');
-      return;
-    }
     const sesion = await obtenerSesion();
+
     if (!sesion) {
       Alert.alert('Sesión requerida', 'Debes iniciar sesión para comprar');
       navigation.navigate('Login');
       return;
     }
+
+    const itemsParaEnviar = items.map((item) => ({
+      videojuego_id: item.videojuego_id,
+      cantidad: item.cantidad,
+      precio_unitario: item.precio,
+    }));
+
+    if (!conectado) {
+      const compraPendiente = {
+        local_id: `compra_${Date.now()}`,
+        items: itemsParaEnviar,
+        total,
+        fecha: new Date().toISOString(),
+      };
+
+      guardarCompraPendienteLocal(compraPendiente);
+      vaciarCarritoLocal();
+      setItems([]);
+      Alert.alert('Sin conexión', 'Tu compra quedó guardada y se registrará automáticamente cuando vuelvas a tener internet.', [
+        { text: 'OK', onPress: () => navigation.navigate('Catalogo') },
+      ]);
+      return;
+    }
+
     try {
       setConfirmando(true);
-      const itemsParaEnviar = items.map((item) => ({ videojuego_id: item.videojuego_id, cantidad: item.cantidad, precio_unitario: item.precio }));
       const resultado = await registrarCompra(sesion.token, itemsParaEnviar);
       vaciarCarritoLocal();
       setItems([]);

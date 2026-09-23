@@ -29,9 +29,9 @@ function obtenerSchemaSql() {
         usuario_id INTEGER NOT NULL,
         videojuego_id INTEGER NOT NULL,
         cantidad INTEGER NOT NULL DEFAULT 1,
-        local_id TEXT UNIQUE,
         FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
-        FOREIGN KEY (videojuego_id) REFERENCES videojuegos(id)
+        FOREIGN KEY (videojuego_id) REFERENCES videojuegos(id),
+        UNIQUE (usuario_id, videojuego_id)
       );
 
       CREATE TABLE IF NOT EXISTS compras (
@@ -41,6 +41,20 @@ function obtenerSchemaSql() {
         fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
       );
+
+      CREATE TABLE IF NOT EXISTS historial_compras (
+        id SERIAL PRIMARY KEY,
+        usuario_id INTEGER NOT NULL,
+        compra_id INTEGER NOT NULL UNIQUE,
+        total NUMERIC(10,2) NOT NULL,
+        fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        estado TEXT NOT NULL DEFAULT 'completada',
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
+        FOREIGN KEY (compra_id) REFERENCES compras(id)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_historial_compras_usuario_fecha
+        ON historial_compras (usuario_id, fecha DESC);
 
       CREATE TABLE IF NOT EXISTS detalle_compras (
         id SERIAL PRIMARY KEY,
@@ -77,9 +91,9 @@ function obtenerSchemaSql() {
       usuario_id INTEGER NOT NULL,
       videojuego_id INTEGER NOT NULL,
       cantidad INTEGER NOT NULL DEFAULT 1,
-      local_id TEXT UNIQUE,
       FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
-      FOREIGN KEY (videojuego_id) REFERENCES videojuegos(id)
+      FOREIGN KEY (videojuego_id) REFERENCES videojuegos(id),
+      UNIQUE (usuario_id, videojuego_id)
     );
 
     CREATE TABLE IF NOT EXISTS compras (
@@ -89,6 +103,20 @@ function obtenerSchemaSql() {
       fecha TEXT DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
     );
+
+    CREATE TABLE IF NOT EXISTS historial_compras (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      usuario_id INTEGER NOT NULL,
+      compra_id INTEGER NOT NULL UNIQUE,
+      total REAL NOT NULL,
+      fecha TEXT DEFAULT CURRENT_TIMESTAMP,
+      estado TEXT NOT NULL DEFAULT 'completada',
+      FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
+      FOREIGN KEY (compra_id) REFERENCES compras(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_historial_compras_usuario_fecha
+      ON historial_compras (usuario_id, fecha DESC);
 
     CREATE TABLE IF NOT EXISTS detalle_compras (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -104,6 +132,46 @@ function obtenerSchemaSql() {
 
 async function crearTablas() {
   await db.exec(obtenerSchemaSql());
+}
+
+async function asegurarMigracionCarrito() {
+  if (process.env.DATABASE_URL) {
+    await db.exec(`
+      WITH duplicados AS (
+        SELECT id,
+               ROW_NUMBER() OVER (
+                 PARTITION BY usuario_id, videojuego_id
+                 ORDER BY id
+               ) AS orden
+        FROM carrito
+      )
+      DELETE FROM carrito
+      WHERE id IN (
+        SELECT id FROM duplicados WHERE orden > 1
+      );
+    `);
+
+    await db.exec(`
+      CREATE UNIQUE INDEX IF NOT EXISTS carrito_usuario_videojuego_unico
+      ON carrito (usuario_id, videojuego_id);
+    `);
+
+    return;
+  }
+
+  await db.exec(`
+    DELETE FROM carrito
+    WHERE rowid NOT IN (
+      SELECT MIN(rowid)
+      FROM carrito
+      GROUP BY usuario_id, videojuego_id
+    );
+  `);
+
+  await db.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS carrito_usuario_videojuego_unico
+    ON carrito (usuario_id, videojuego_id);
+  `);
 }
 
 // Genera una URL de portada con el nombre del juego sobre un fondo de color.
@@ -199,6 +267,7 @@ async function insertarDatosDePrueba() {
 
 async function inicializarBase() {
   await crearTablas();
+  await asegurarMigracionCarrito();
   await insertarDatosDePrueba();
 }
 

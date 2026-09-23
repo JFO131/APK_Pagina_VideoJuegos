@@ -7,9 +7,11 @@ import { useTema } from '../context/TemaContext';
 
 export default function ItemCarrito({ item, alCambiarCantidad, alEliminar }) {
   const { colores } = useTema();
-  const subtotal = item.precio * item.cantidad;
-  const imagenLocal = obtenerImagenLocal(item.nombre);
-  const tieneImagenRemota = !imagenLocal && item.imagen && item.imagen.startsWith('http');
+  const precio = Number(item?.precio ?? 0);
+  const cantidad = Number(item?.cantidad ?? 0);
+  const subtotal = precio * cantidad;
+  const imagenLocal = obtenerImagenLocal(item?.nombre);
+  const tieneImagenRemota = !imagenLocal && item?.imagen && item.imagen.startsWith('http');
 
   return (
     <View style={[estilos.fila, { backgroundColor: colores.tarjeta }]}>
@@ -25,7 +27,7 @@ export default function ItemCarrito({ item, alCambiarCantidad, alEliminar }) {
 
       <View style={estilos.info}>
         <Text style={[estilos.nombre, { color: colores.texto }]} numberOfLines={1}>{item.nombre}</Text>
-        <Text style={[estilos.precioUnitario, { color: colores.textoSecundario }]}>${item.precio.toFixed(2)} c/u</Text>
+        <Text style={[estilos.precioUnitario, { color: colores.textoSecundario }]}>${precio.toFixed(2)} c/u</Text>
 
         <View style={estilos.controles}>
           <TouchableOpacity style={[estilos.botonCantidad, { backgroundColor: colores.tarjetaClara }]} onPress={() => alCambiarCantidad(item.local_id, item.cantidad - 1)}>

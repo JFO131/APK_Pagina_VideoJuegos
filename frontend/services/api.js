@@ -7,11 +7,39 @@
 const URL_API = 'https://apk-pagina-videojuegos.onrender.com/api';
 const URL_JUEGOS = `${URL_API}/juegos`;
 
+function normalizarNumero(valor) {
+  const numero = Number(valor ?? 0);
+  return Number.isFinite(numero) ? numero : 0;
+}
+
+function normalizarValores(obj) {
+  if (Array.isArray(obj)) {
+    return obj.map(normalizarValores);
+  }
+
+  if (obj && typeof obj === 'object') {
+    const salida = {};
+
+    for (const [clave, valor] of Object.entries(obj)) {
+      if (['precio', 'precio_unitario', 'total'].includes(clave)) {
+        salida[clave] = normalizarNumero(valor);
+      } else {
+        salida[clave] = normalizarValores(valor);
+      }
+    }
+
+    return salida;
+  }
+
+  return obj;
+}
+
 async function leerRespuesta(respuesta) {
   const texto = await respuesta.text();
 
   try {
-    return texto ? JSON.parse(texto) : {};
+    if (!texto) return {};
+    return normalizarValores(JSON.parse(texto));
   } catch {
     throw new Error('El servidor devolvió una respuesta no válida');
   }
@@ -104,7 +132,7 @@ export async function registrarCompra(token, items) {
     body: JSON.stringify({ items }),
   });
 
-  const datos = await respuesta.json();
+  const datos = await leerRespuesta(respuesta);
 
   if (!respuesta.ok) {
     throw new Error(datos.mensaje || 'No se pudo registrar la compra');

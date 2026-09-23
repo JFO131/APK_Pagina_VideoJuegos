@@ -1,11 +1,11 @@
 // screens/CatalogoScreen.js
 import { useState, useEffect, useMemo } from 'react';
-import { View, FlatList, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet, RefreshControl } from 'react-native';
+import { View, FlatList, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet, RefreshControl, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { obtenerJuegos } from '../services/api';
 import { guardarCatalogoLocal, obtenerCatalogoLocal } from '../database/sqlite';
 import { hayConexion, escucharCambiosDeConexion } from '../services/conexion';
-import { sincronizarCarritoConServidor } from '../services/sincronizacion';
+import { sincronizarCarritoConServidor, sincronizarComprasPendientes } from '../services/sincronizacion';
 import JuegoCard from '../components/JuegoCard';
 import BannerConexion from '../components/BannerConexion';
 import { useTema } from '../context/TemaContext';
@@ -22,12 +22,38 @@ export default function CatalogoScreen({ navigation }) {
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
 
   useEffect(() => {
+    async function sincronizarAlInicio() {
+      const conectado = await hayConexion();
+      if (!conectado) {
+        setEstadoBanner('offline');
+        return;
+      }
+
+      setEstadoBanner('sincronizando');
+      try {
+        await sincronizarCarritoConServidor();
+      } catch (error) {
+        // Si falla la sincronización, la app mantiene el carrito local y reintenta luego.
+      } finally {
+        setTimeout(() => setEstadoBanner(null), 2000);
+      }
+    }
+
     cargarJuegos();
+    sincronizarAlInicio();
 
     const dejarDeEscuchar = escucharCambiosDeConexion((conectado) => {
       if (conectado) {
         setEstadoBanner('sincronizando');
-        sincronizarCarritoConServidor()
+        Promise.all([
+          sincronizarCarritoConServidor(),
+          sincronizarComprasPendientes(),
+        ])
+          .then(([_, comprasSincronizadas]) => {
+            if (comprasSincronizadas > 0) {
+              Alert.alert('Compra registrada', 'Tu compra pendiente se realizó correctamente cuando volvió la conexión.');
+            }
+          })
           .catch(() => {})
           .finally(() => {
             cargarJuegos();

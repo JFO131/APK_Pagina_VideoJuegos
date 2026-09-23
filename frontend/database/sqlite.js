@@ -25,6 +25,13 @@ export function inicializarBaseLocal() {
       sincronizado INTEGER DEFAULT 0,
       eliminado INTEGER DEFAULT 0
     );
+
+    CREATE TABLE IF NOT EXISTS compras_pendientes (
+      local_id TEXT PRIMARY KEY,
+      payload TEXT NOT NULL,
+      sincronizado INTEGER DEFAULT 0,
+      creado_en TEXT DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 
   // Si la app ya existía antes de agregar "genero", la agregamos ahora.
@@ -109,6 +116,26 @@ export function marcarCarritoComoSincronizado(localIds) {
 
 export function eliminarFilasMarcadasComoEliminadas() {
   db.runSync('DELETE FROM carrito_local WHERE eliminado = 1 AND sincronizado = 1');
+}
+
+export function guardarCompraPendienteLocal(compra) {
+  const payload = JSON.stringify(compra);
+  db.runSync(
+    'INSERT OR REPLACE INTO compras_pendientes (local_id, payload, sincronizado) VALUES (?, ?, 0)',
+    [compra.local_id, payload]
+  );
+}
+
+export function obtenerComprasPendientes() {
+  return db.getAllSync('SELECT * FROM compras_pendientes WHERE sincronizado = 0 ORDER BY creado_en ASC');
+}
+
+export function marcarCompraPendienteComoSincronizada(localId) {
+  db.runSync('UPDATE compras_pendientes SET sincronizado = 1 WHERE local_id = ?', [localId]);
+}
+
+export function eliminarComprasPendientesSincronizadas() {
+  db.runSync('DELETE FROM compras_pendientes WHERE sincronizado = 1');
 }
 
 export default db;

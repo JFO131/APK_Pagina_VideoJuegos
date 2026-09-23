@@ -11,25 +11,30 @@ async function sincronizar(req, res) {
   }
 
   const guardarOActualizar = db.prepare(`
-    INSERT INTO carrito (usuario_id, videojuego_id, cantidad, local_id)
-    VALUES (@usuario_id, @videojuego_id, @cantidad, @local_id)
-    ON CONFLICT(local_id) DO UPDATE SET cantidad = excluded.cantidad
+    INSERT INTO carrito (usuario_id, videojuego_id, cantidad)
+    VALUES (?, ?, ?)
+    ON CONFLICT (usuario_id, videojuego_id)
+    DO UPDATE SET cantidad = excluded.cantidad
   `);
 
-  const eliminar = db.prepare('DELETE FROM carrito WHERE local_id = ? AND usuario_id = ?');
+  const eliminar = db.prepare('DELETE FROM carrito WHERE usuario_id = ? AND videojuego_id = ?');
 
   const procesarTodos = db.transaction(async (lista) => {
     for (const item of lista) {
-      if (item.eliminado) {
-        await eliminar.run(item.local_id, usuarioId);
-      } else {
-        await guardarOActualizar.run({
-          usuario_id: usuarioId,
-          videojuego_id: item.videojuego_id,
-          cantidad: item.cantidad,
-          local_id: item.local_id,
-        });
+      if (!item || typeof item.videojuego_id === 'undefined') {
+        continue;
       }
+
+      if (item.eliminado) {
+        await eliminar.run(usuarioId, item.videojuego_id);
+        continue;
+      }
+
+      await guardarOActualizar.run(
+        usuarioId,
+        item.videojuego_id,
+        Number(item.cantidad ?? 1)
+      );
     }
   });
 
@@ -37,7 +42,7 @@ async function sincronizar(req, res) {
 
   res.json({
     mensaje: 'Carrito sincronizado correctamente',
-    localIdsSincronizados: items.map((i) => i.local_id),
+    actualizado: true,
   });
 }
 

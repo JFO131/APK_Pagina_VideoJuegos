@@ -26,7 +26,7 @@ export default function CarritoScreen({ navigation }) {
     cargarCarrito();
   }
 
-  const total = items.reduce((suma, item) => suma + item.precio * item.cantidad, 0);
+  const total = items.reduce((suma, item) => suma + Number(item?.precio ?? 0) * Number(item?.cantidad ?? 0), 0);
 
   if (items.length === 0) {
     return (

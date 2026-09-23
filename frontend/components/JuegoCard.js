@@ -12,8 +12,9 @@ import { useTema } from '../context/TemaContext';
 
 export default function JuegoCard({ juego, alPresionar }) {
   const { colores } = useTema();
-  const imagenLocal = obtenerImagenLocal(juego.nombre);
-  const tieneImagenRemota = !imagenLocal && juego.imagen && juego.imagen.startsWith('http');
+  const precio = Number(juego?.precio ?? 0);
+  const imagenLocal = obtenerImagenLocal(juego?.nombre);
+  const tieneImagenRemota = !imagenLocal && juego?.imagen && juego.imagen.startsWith('http');
   const imagen = imagenLocal || (tieneImagenRemota ? { uri: juego.imagen } : null);
 
   return (
@@ -41,7 +42,7 @@ export default function JuegoCard({ juego, alPresionar }) {
           {juego.nombre}
         </Text>
         <Text style={[estilos.precio, { color: colores.primario }]}>
-          {juego.precio === 0 ? 'Gratis' : `$${juego.precio.toFixed(2)}`}
+          {precio === 0 ? 'Gratis' : `$${precio.toFixed(2)}`}
         </Text>
       </View>
     </TouchableOpacity>

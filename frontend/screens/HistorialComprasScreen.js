@@ -74,13 +74,18 @@ export default function HistorialComprasScreen() {
             <Text style={[estilos.numeroCompra, { color: colores.texto }]}>Compra #{compra.id}</Text>
             <Text style={{ color: colores.textoSecundario, fontSize: 12 }}>{new Date(compra.fecha).toLocaleDateString()}</Text>
           </View>
-          {compra.productos.map((producto) => (
-            <View key={producto.id} style={estilos.filaProducto}>
-              <Text style={{ color: colores.textoSecundario, fontSize: 13, flex: 1 }} numberOfLines={1}>{producto.nombre} x{producto.cantidad}</Text>
-              <Text style={{ color: colores.textoSecundario, fontSize: 13 }}>${(producto.precio_unitario * producto.cantidad).toFixed(2)}</Text>
-            </View>
-          ))}
-          <Text style={[estilos.total, { color: colores.primario }]}>Total: ${compra.total.toFixed(2)}</Text>
+          {compra.productos.map((producto) => {
+            const precioProducto = Number(producto?.precio_unitario ?? 0);
+            const cantidad = Number(producto?.cantidad ?? 0);
+
+            return (
+              <View key={producto.id} style={estilos.filaProducto}>
+                <Text style={{ color: colores.textoSecundario, fontSize: 13, flex: 1 }} numberOfLines={1}>{producto.nombre} x{cantidad}</Text>
+                <Text style={{ color: colores.textoSecundario, fontSize: 13 }}>${(precioProducto * cantidad).toFixed(2)}</Text>
+              </View>
+            );
+          })}
+          <Text style={[estilos.total, { color: colores.primario }]}>Total: ${Number(compra?.total ?? 0).toFixed(2)}</Text>
         </View>
       )}
     />

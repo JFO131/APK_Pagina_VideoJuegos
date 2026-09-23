@@ -45,6 +45,8 @@ export default function DetalleJuegoScreen({ route, navigation }) {
     ]);
   }
 
+  const precio = Number(juego?.precio ?? 0);
+
   if (cargando) return <View style={[estilos.centrado, { backgroundColor: colores.fondo }]} />;
 
   if (!juego) {
@@ -82,7 +84,7 @@ export default function DetalleJuegoScreen({ route, navigation }) {
         <Text style={[estilos.nombre, { color: colores.texto }]}>{juego.nombre}</Text>
         <Text style={[estilos.genero, { color: colores.textoSecundario }]}>{juego.genero}</Text>
         <Text style={[estilos.precio, { color: colores.primario }]}>
-          {juego.precio === 0 ? 'Gratis' : `$${juego.precio.toFixed(2)}`}
+          {precio === 0 ? 'Gratis' : `$${precio.toFixed(2)}`}
         </Text>
 
         <Text style={[estilos.tituloDescripcion, { color: colores.texto }]}>Descripción</Text>

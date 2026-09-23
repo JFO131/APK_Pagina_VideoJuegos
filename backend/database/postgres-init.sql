@@ -20,10 +20,13 @@ CREATE TABLE IF NOT EXISTS carrito (
   usuario_id INTEGER NOT NULL,
   videojuego_id INTEGER NOT NULL,
   cantidad INTEGER NOT NULL DEFAULT 1,
-  local_id TEXT UNIQUE,
   FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
-  FOREIGN KEY (videojuego_id) REFERENCES videojuegos(id)
+  FOREIGN KEY (videojuego_id) REFERENCES videojuegos(id),
+  UNIQUE (usuario_id, videojuego_id)
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS carrito_usuario_videojuego_unico
+ON carrito (usuario_id, videojuego_id);
 
 CREATE TABLE IF NOT EXISTS compras (
   id SERIAL PRIMARY KEY,
@@ -32,6 +35,20 @@ CREATE TABLE IF NOT EXISTS compras (
   fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 );
+
+CREATE TABLE IF NOT EXISTS historial_compras (
+  id SERIAL PRIMARY KEY,
+  usuario_id INTEGER NOT NULL,
+  compra_id INTEGER NOT NULL UNIQUE,
+  total NUMERIC(10,2) NOT NULL,
+  fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  estado TEXT NOT NULL DEFAULT 'completada',
+  FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
+  FOREIGN KEY (compra_id) REFERENCES compras(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_historial_compras_usuario_fecha
+  ON historial_compras (usuario_id, fecha DESC);
 
 CREATE TABLE IF NOT EXISTS detalle_compras (
   id SERIAL PRIMARY KEY,
